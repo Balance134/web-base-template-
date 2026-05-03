@@ -46,3 +46,6 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Sibling repositories (live next to this template, not part of it)
+hotel-pitch-template/

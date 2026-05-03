@@ -5,19 +5,62 @@
 
 ---
 
+## Назначение шаблона
+
+`web-base-template` — шаблон для **production-сайтов клиентов
+ПОСЛЕ оплаты**. Полноценный Next.js + i18n + Iconify + design
+tokens. Время разворачивания ~25 минут на одну Hero-секцию плюс
+существенный расход токенов.
+
+**Не использовать для:**
+- холодных рассылок и пресейла (слишком дорого по токенам/времени)
+- генерации превью «на посмотреть» потенциальному клиенту
+- быстрых демо
+
+Для пресейла, cold/warm-заходов и превью используется отдельный
+шаблон `hotel-pitch-template/` (живёт в соседней папке как
+независимый git-репозиторий). См. README → «Связанные репозитории».
+
+---
+
 ## Stack
 
-- **Framework:** Next.js 15 (App Router)
-- **Styling:** Tailwind CSS + CSS variables в `globals.css` для design tokens
-- **UI Components:** shadcn/ui (через `npx shadcn@latest add`)
+### Из коробки (ставим сразу)
+
+- **Framework:** Next.js 16 (App Router). Routing-middleware
+  файл называется `proxy.ts` (Next 16 переименовал
+  `middleware.ts` → `proxy.ts`, старое имя deprecated.
+  `proxy.ts` работает только на Node.js runtime — edge не
+  поддерживается. Если нужен edge runtime — оставить
+  `middleware.ts`.)
+- **React:** 19.2 (поставляется с Next 16, поддержка React
+  Compiler из коробки — automatic memoization без ручных
+  `useMemo`/`useCallback`).
+- **Styling:** Tailwind CSS v4 + CSS variables в `globals.css`
+  для design tokens. Токены пробрасываются в утилиты через
+  `@theme inline { --color-*: ... }` прямо в CSS — `tailwind.config.js`
+  не нужен. Подробности — `docs/design-system.md`.
 - **Language:** TypeScript (strict mode)
 - **Icons:** Iconify (`<iconify-icon>` web component) — Solar Linear для UI,
   Simple Icons для брендов
-- **Forms:** React Hook Form + Zod для валидации, Resend для отправки на email
-- **Internationalization:** next-intl (минимум RU + EN, для отелей часто +UZ)
+- **Internationalization:** next-intl (минимум RU + EN, для отелей в
+  Узбекистане + UZ — см. раздел Languages)
 - **Deploy:** Vercel
 - **AI integrations:** webhook → n8n → Gemini API (для AI-консьержей и
   других ассистентов)
+
+### По требованию (ставим только когда реально нужно)
+
+- **shadcn/ui** — подключаем когда впервые понадобится сложный
+  компонент (Dialog, Command, Sheet, DataTable, Form-обёртки).
+  Для Hero/Features/Pricing/Footer хватает Tailwind + Iconify +
+  собственного `cn()` в `lib/utils.ts`. Init shadcn под Tailwind v4 +
+  React 19 — лишняя точка отказа на ровном месте.
+- **React Hook Form + Zod** — когда появляется первая нетривиальная
+  форма (бронирование, контакт-форма с валидацией).
+- **Resend** — когда формы должны отправлять письма.
+- **Playwright** — когда нужен парсинг Booking или автоматические
+  скриншоты.
 
 ---
 
@@ -36,6 +79,7 @@
 /messages             # Переводы (ru.json, en.json, uz.json)
 /scripts              # Служебные скрипты (парсер Booking, генераторы)
 /docs                 # Документация проекта (НЕ деплоится)
+proxy.ts              # next-intl middleware (Next 16: proxy.ts, не middleware.ts)
 ```
 
 ---
@@ -75,8 +119,26 @@
   <iconify-icon icon="solar:user-linear" width="24"></iconify-icon>
   ```
   Скрипт подключается один раз в `layout.tsx`.
-- **Изображения:** для плейсхолдеров — Unsplash через `next/image`.
-  Реальные фото клиента → `/public/images/` с осмысленными именами.
+- **Изображения: stock-фото запрещены полностью.** Никаких
+  Unsplash, Pexels, Pixabay, Picsum в шаблонах. Причина: ИИ не
+  «видит» картинки и опирается на метаданные/теги, которые часто
+  врут — на тестовом прогоне поиск по «Samarkand»/«Registan»/
+  «boutique hotel» дважды подряд отдал не ту страну (Шефшауэн
+  в Марокко, потом Берлин). В живом проекте это означало бы
+  поставить чужую страну на главную страницу отеля.
+
+  Допустимо:
+  - **Реальные фото клиента** в `/public/images/` с осмысленными
+    именами (`courtyard-evening.jpg`, `room-deluxe-01.jpg`).
+  - **Фото с Booking-страницы** клиента (это РЕАЛЬНЫЕ фото
+    отеля).
+  - **Typographic-режим** (без фото, на градиентном фоне) —
+    полноценная альтернатива, часто даже сильнее «лишь бы какой
+    картинки». Подробнее — `docs/section-by-section-workflow.md`.
+
+  Если реальных фото ещё нет — собираем секцию без фото, ждём
+  фотосессию или фото с Booking. Со стоков не берём ни на каком
+  этапе.
 
 ---
 
@@ -96,7 +158,12 @@
 ## Languages
 
 По умолчанию: русский + английский.
-Для отелей в Узбекистане часто нужен узбекский.
+
+**Для отелей в Узбекистане — обязательно держим заготовку
+под узбекский** (`/messages/uz.json` создаём сразу, даже если
+наполнение пойдёт позже). Включаем `uz` в `i18n/routing.ts`
+наравне с `ru`/`en`. Добавлять третий язык задним числом
+дороже, чем держать пустой каркас с самого начала.
 
 Тексты выносятся в `/messages/{locale}.json`. В компонентах используется
 `useTranslations()` из `next-intl`.
@@ -140,6 +207,9 @@
 
 ## What NOT to do
 
+- **Не используй stock-фото** (Unsplash, Pexels, Pixabay, Picsum)
+  ни в каких сценариях, даже как временные плейсхолдеры. См.
+  Design Principles → Изображения.
 - **Не используй plain HTML/CSS/JS** для клиентских проектов. Это
   шаблон на Next.js — мы не теряем SEO, маршрутизацию, оптимизацию
   изображений ради "простоты".
