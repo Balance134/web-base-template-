@@ -57,7 +57,14 @@ security protocol) применяются автоматически.
 - Точное название отеля
 - Описание (1-2 абзаца)
 - Все типы номеров с описанием и ценами
-- Полный список удобств
+- Удобства **по категориям** согласно структуре `amenities` в
+  `hotel.schema.json` (popular, bathroom, bedroom, kitchen,
+  room_features, media, food_and_drink, internet, parking,
+  front_desk, family_services, cleaning, safety, general,
+  spa_and_leisure, business, languages_spoken). Источник истины —
+  `/home/balance/projects/hotel-pitch-template/data/hotel.schema.json`.
+  Для отелей в Узбекистане: в `languages_spoken` узбекский по
+  умолчанию, ru/en только если подтверждены на Booking.
 - Политики (заезд/выезд/отмена/дети/питомцы)
 - Расположение и расстояния до достопримечательностей
 - Координаты адреса
@@ -98,7 +105,9 @@ security protocol) применяются автоматически.
 ☑ Time для ответа менеджера указан
 ☑ Security Protocol присутствует
 ☑ Блоки `[BOOKING_REQUEST]` и `[ESCALATE]` сохранены в исходном
-  формате
+  формате (поля `[BOOKING_REQUEST]`: name, contact, contact_value,
+  dates, guests, room_preference, language, notes — строго в этом
+  порядке, синхронно с pitch-template, n8n парсит регуляркой)
 ☑ Промпт на русском языке, инструкции для агента ясные
 
 ### Шаг 5: Формат вывода
